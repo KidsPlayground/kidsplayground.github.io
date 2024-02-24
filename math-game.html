@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Math Game for Kids</title>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+  <style>
+    body {
+      font-family: 'Comic Sans MS', cursive, sans-serif;
+      font-family: Neucha;
+      font-size: 24px;
+    }
+    /*div:hover {
+      background-color: yellow;
+    }*/
+    .jumbotron {
+      background-color: #93c47d;
+      border-color: #cc0000;
+    }
+    .btn {
+      font-size: 24px;
+    }
+
+  </style>
+</head>
+<body id="styled-alphabet">
+
+  <div class="jumbotron text-center">
+    <h1 id="colorful">Math Game for Kids</h1>
+  </div>
+
+  <div class="container">
+
+    <div id="setup" class="form-group">
+      <label>Select Operator:</label><br>
+      <label class="checkbox-inline"><input type="checkbox" value="add"> Addition</label>
+      <label class="checkbox-inline"><input type="checkbox" value="sub"> Subtraction</label>
+      <label class="checkbox-inline"><input type="checkbox" value="mul"> Multiplication</label>
+      <label class="checkbox-inline"><input type="checkbox" value="div"> Division</label><br><br>
+      <label>Enter Max Number:</label>
+      <input type="number" id="maxNumber" class="form-control" min="1" value="10"><br>
+      <button id="startBtn" class="btn btn-primary">Start Game</button>
+    </div>
+    
+    <div id="game" style="display: none;" class="col-md-12 text-center">
+      <div class="btn-group btn-group-justified">
+        <div id="question" class="btn btn-primary question"></div>
+      </div>
+      <br>
+      <div class="btn-group btn-group-justified">
+        <div id="options"></div>
+      </div>
+      <br>
+      <!-- <div id="options" class="row"></div> -->
+      <div id="result"></div>
+      <br>
+      <div class="btn-group btn-group-justified">
+        <div id="score" class="btn btn-info"></div>
+      </div>
+      <br>
+      <h2>Previous Results</h2>
+      <div class="list-group">
+        <div id="history" class="history"></div>
+      </div>
+      
+    </div>
+
+  </div>
+
+  <script>
+    var operators = [];
+    var maxNumber = 10;
+    var currentQuestion = {};
+    var score = 0;
+    var questionCount = 0;
+
+    $(document).ready(function() {
+      $('#setup').show();
+      $('#game').hide();
+
+      $('#startBtn').click(function() {
+        startGame();
+      });
+
+    });
+
+    function startGame() {
+      operators = [];
+      $("input[type=checkbox]:checked").each(function() {
+        operators.push($(this).val());
+      });
+      maxNumber = $('#maxNumber').val();
+      if (operators.length === 0) {
+        alert("Please select at least one operator!");
+        return;
+      }
+      $('#setup').hide();
+      $('#game').show();
+      generateQuestion();
+    }
+
+    function generateQuestion() {
+      var num1 = Math.floor(Math.random() * maxNumber) + 1;
+      var num2 = Math.floor(Math.random() * maxNumber) + 1;
+      var operator = operators[Math.floor(Math.random() * operators.length)];
+      var questionText = '';
+      switch (operator) {
+        case 'add':
+          questionText = num1 + " + " + num2 + " = ";
+          break;
+        case 'sub':
+          if (num1 < num2) {
+            var temp = num1;
+            num1 = num2;
+            num2 = temp;
+          }
+          questionText = num1 + " - " + num2 + " = ";
+          break;
+        case 'mul':
+          questionText = num1 + " × " + num2 + " = ";
+          break;
+        case 'div':
+          var result = num1 * num2;
+          questionText = result + " ÷ " + num1 + " = ";
+          break;
+      }
+      currentQuestion = {
+        num1: num1,
+        num2: num2,
+        operator: operator
+      };
+
+      $('#question').text(questionText + "?");
+      generateOptions(questionText);
+      updateScore();
+      
+    }
+
+    function generateOptions(questionText) {
+      $('#options').empty();
+      var correctAnswer = evaluateExpression(currentQuestion.num1, currentQuestion.num2, currentQuestion.operator);
+      var options = [correctAnswer];
+      while (options.length < 4) {
+        var option = generateRandomOption(correctAnswer);
+        if (!options.includes(option)) {
+          options.push(option);
+        }
+      }
+      options = shuffleArray(options);
+      options.forEach(function(option) {
+        var btn = $('<button>');
+        btn.text(option);
+        btn.addClass('btn btn-default col-md-3');
+        btn.click(function() {
+          checkAnswer(option, correctAnswer, questionText);
+        });
+        $('#options').append(btn);
+      });
+    }
+
+    function evaluateExpression(num1, num2, operator) {
+      switch (operator) {
+        case 'add':
+          return num1 + num2;
+        case 'sub':
+          return num1 - num2;
+        case 'mul':
+          return num1 * num2;
+        case 'div':
+          return num1;
+      }
+    }
+
+    function generateRandomOption(correctAnswer) {
+      var min = Math.max(1, correctAnswer - 10);
+      var max = correctAnswer + 10;
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function shuffleArray(array) {
+      for (var i = array.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var temp = array[i];
+        array[i] = array[j];
+        array[j] = temp;
+      }
+      return array;
+    }
+
+    function checkAnswer(selectedAnswer, correctAnswer, questionText) {
+      historyText = questionText + correctAnswer
+      historyOutput = '<div class="list-group-item list-group-item-success">' + historyText + '</div>'
+      if (parseInt(selectedAnswer) === correctAnswer) {
+        score++;
+        $('#result').html('<p class="text-success">Correct! Well done!</p>');
+      } else {
+        historyOutput = '<div class="list-group-item list-group-item-danger">' + historyText + '</div>'
+        $('#result').html('<p class="text-danger">Incorrect! The correct answer is ' + correctAnswer + '.</p>');
+      }
+      questionCount++;
+      updateScore();
+      generateQuestion();
+      recordQuestionHistory(historyOutput)
+    }
+
+    function updateScore() {
+      $('#score').text('Score: ' + score + ' out of ' + questionCount);
+    }
+
+    function recordQuestionHistory(expressionText) {
+      $('#history').prepend(expressionText);
+    }
+  </script>
+
+
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Select all text elements within the body
+      var element = document.getElementById('colorful');
+
+      var textContent = element.textContent.trim();
+      if (textContent.length > 0) {
+        var styledContent = '';
+        for (var i = 0; i < textContent.length; i++) {
+          var char = textContent.charAt(i);
+          var color = getRandomColor();
+          styledContent += '<span class="styled-letter" style="color: ' + color + ';">' + char + '</span>';
+        }
+        // Replace the original text content with the styled content
+        element.innerHTML = styledContent;
+      }
+
+    });
+
+    function getRandomColor() {
+      var letters = '0123456789ABCDEF';
+      var color = '#';
+      for (var i = 0; i < 6; i++) {
+        color += letters[Math.floor(Math.random() * 16)];
+      }
+      return color;
+    }
+  </script>
+
+
+</body>
+</html>
